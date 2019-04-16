@@ -10,438 +10,508 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-func newFlagSet() *flag.FlagSet {
+func newFlagSet() flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.PanicOnError)
 	fs.Int("go", 0, "Target minor Go version")
-	return fs
+	return *fs
 }
 
 var Analyzers = map[string]*analysis.Analyzer{
-	"SA1000": &analysis.Analyzer{
+	"SA1000": {
 		Name:     "SA1000",
 		Run:      callChecker(checkRegexpRules),
 		Doc:      docSA1000,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1001": &analysis.Analyzer{
+	"SA1001": {
 		Name:     "SA1001",
 		Run:      CheckTemplate,
 		Doc:      docSA1001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1002": &analysis.Analyzer{
+	"SA1002": {
 		Name:     "SA1002",
 		Run:      callChecker(checkTimeParseRules),
 		Doc:      docSA1002,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1003": &analysis.Analyzer{
+	"SA1003": {
 		Name:     "SA1003",
 		Run:      callChecker(checkEncodingBinaryRules),
 		Doc:      docSA1003,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1004": &analysis.Analyzer{
+	"SA1004": {
 		Name:     "SA1004",
 		Run:      CheckTimeSleepConstant,
 		Doc:      docSA1004,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1005": &analysis.Analyzer{
+	"SA1005": {
 		Name:     "SA1005",
 		Run:      CheckExec,
 		Doc:      docSA1005,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1006": &analysis.Analyzer{
+	"SA1006": {
 		Name:     "SA1006",
 		Run:      CheckUnsafePrintf,
 		Doc:      docSA1006,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1007": &analysis.Analyzer{
+	"SA1007": {
 		Name:     "SA1007",
 		Run:      callChecker(checkURLsRules),
 		Doc:      docSA1007,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1008": &analysis.Analyzer{
+	"SA1008": {
 		Name:     "SA1008",
 		Run:      CheckCanonicalHeaderKey,
 		Doc:      docSA1008,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1010": &analysis.Analyzer{
+	"SA1010": {
 		Name:     "SA1010",
 		Run:      callChecker(checkRegexpFindAllRules),
 		Doc:      docSA1010,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1011": &analysis.Analyzer{
+	"SA1011": {
 		Name:     "SA1011",
 		Run:      callChecker(checkUTF8CutsetRules),
 		Doc:      docSA1011,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1012": &analysis.Analyzer{
+	"SA1012": {
 		Name:     "SA1012",
 		Run:      CheckNilContext,
 		Doc:      docSA1012,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1013": &analysis.Analyzer{
+	"SA1013": {
 		Name:     "SA1013",
 		Run:      CheckSeeker,
 		Doc:      docSA1013,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1014": &analysis.Analyzer{
+	"SA1014": {
 		Name:     "SA1014",
 		Run:      callChecker(checkUnmarshalPointerRules),
 		Doc:      docSA1014,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1015": &analysis.Analyzer{
+	"SA1015": {
 		Name:     "SA1015",
 		Run:      CheckLeakyTimeTick,
 		Doc:      docSA1015,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1016": &analysis.Analyzer{
+	"SA1016": {
 		Name:     "SA1016",
 		Run:      CheckUntrappableSignal,
 		Doc:      docSA1016,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1017": &analysis.Analyzer{
+	"SA1017": {
 		Name:     "SA1017",
 		Run:      callChecker(checkUnbufferedSignalChanRules),
 		Doc:      docSA1017,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1018": &analysis.Analyzer{
+	"SA1018": {
 		Name:     "SA1018",
 		Run:      callChecker(checkStringsReplaceZeroRules),
 		Doc:      docSA1018,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	// "SA1019": &analysis.Analyzer{Name: "SA1019", Run: CheckDeprecated, Doc: docSA1019},
-	"SA1020": &analysis.Analyzer{
+	// "SA1019": {Name: "SA1019", Run: CheckDeprecated, Doc: docSA1019},
+	"SA1020": {
 		Name:     "SA1020",
 		Run:      callChecker(checkListenAddressRules),
 		Doc:      docSA1020,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1021": &analysis.Analyzer{
+	"SA1021": {
 		Name:     "SA1021",
 		Run:      callChecker(checkBytesEqualIPRules),
 		Doc:      docSA1021,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1023": &analysis.Analyzer{
+	"SA1023": {
 		Name:     "SA1023",
 		Run:      CheckWriterBufferModified,
 		Doc:      docSA1023,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1024": &analysis.Analyzer{
+	"SA1024": {
 		Name:     "SA1024",
 		Run:      callChecker(checkUniqueCutsetRules),
 		Doc:      docSA1024,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1025": &analysis.Analyzer{
+	"SA1025": {
 		Name:     "SA1025",
 		Run:      CheckTimerResetReturnValue,
 		Doc:      docSA1025,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1026": &analysis.Analyzer{
+	"SA1026": {
 		Name:     "SA1026",
 		Run:      callChecker(checkUnsupportedMarshal),
 		Doc:      docSA1026,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA1027": &analysis.Analyzer{
+	"SA1027": {
 		Name:     "SA1027",
 		Run:      callChecker(checkAtomicAlignment),
 		Doc:      docSA1027,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA2000": &analysis.Analyzer{
+	"SA2000": {
 		Name:     "SA2000",
 		Run:      CheckWaitgroupAdd,
 		Doc:      docSA2000,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA2001": &analysis.Analyzer{
+	"SA2001": {
 		Name:     "SA2001",
 		Run:      CheckEmptyCriticalSection,
 		Doc:      docSA2001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA2002": &analysis.Analyzer{
+	"SA2002": {
 		Name:     "SA2002",
 		Run:      CheckConcurrentTesting,
 		Doc:      docSA2002,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA2003": &analysis.Analyzer{
+	"SA2003": {
 		Name:     "SA2003",
 		Run:      CheckDeferLock,
 		Doc:      docSA2003,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA3000": &analysis.Analyzer{
+	"SA3000": {
 		Name:     "SA3000",
 		Run:      CheckTestMainExit,
 		Doc:      docSA3000,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA3001": &analysis.Analyzer{
+	"SA3001": {
 		Name:     "SA3001",
 		Run:      CheckBenchmarkN,
 		Doc:      docSA3001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA4000": &analysis.Analyzer{
+	"SA4000": {
 		Name:     "SA4000",
 		Run:      CheckLhsRhsIdentical,
 		Doc:      docSA4000,
 		Requires: []*analysis.Analyzer{inspect.Analyzer, lintdsl.TokenFileAnalyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4001": &analysis.Analyzer{
+	"SA4001": {
 		Name:     "SA4001",
 		Run:      CheckIneffectiveCopy,
 		Doc:      docSA4001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4002": &analysis.Analyzer{
+	"SA4002": {
 		Name:     "SA4002",
 		Run:      CheckDiffSizeComparison,
 		Doc:      docSA4002,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4003": &analysis.Analyzer{
+	"SA4003": {
 		Name:     "SA4003",
 		Run:      CheckExtremeComparison,
 		Doc:      docSA4003,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4004": &analysis.Analyzer{
+	"SA4004": {
 		Name:     "SA4004",
 		Run:      CheckIneffectiveLoop,
 		Doc:      docSA4004,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4006": &analysis.Analyzer{
+	"SA4006": {
 		Name:     "SA4006",
 		Run:      CheckUnreadVariableValues,
 		Doc:      docSA4006,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4008": &analysis.Analyzer{
+	"SA4008": {
 		Name:     "SA4008",
 		Run:      CheckLoopCondition,
 		Doc:      docSA4008,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4009": &analysis.Analyzer{
+	"SA4009": {
 		Name:     "SA4009",
 		Run:      CheckArgOverwritten,
 		Doc:      docSA4009,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4010": &analysis.Analyzer{
+	"SA4010": {
 		Name:     "SA4010",
 		Run:      CheckIneffectiveAppend,
 		Doc:      docSA4010,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4011": &analysis.Analyzer{
+	"SA4011": {
 		Name:     "SA4011",
 		Run:      CheckScopedBreak,
 		Doc:      docSA4011,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4012": &analysis.Analyzer{
+	"SA4012": {
 		Name:     "SA4012",
 		Run:      CheckNaNComparison,
 		Doc:      docSA4012,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4013": &analysis.Analyzer{
+	"SA4013": {
 		Name:     "SA4013",
 		Run:      CheckDoubleNegation,
 		Doc:      docSA4013,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4014": &analysis.Analyzer{
+	"SA4014": {
 		Name:     "SA4014",
 		Run:      CheckRepeatedIfElse,
 		Doc:      docSA4014,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4015": &analysis.Analyzer{
+	"SA4015": {
 		Name:     "SA4015",
 		Run:      callChecker(checkMathIntRules),
 		Doc:      docSA4015,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4016": &analysis.Analyzer{
+	"SA4016": {
 		Name:     "SA4016",
 		Run:      CheckSillyBitwiseOps,
 		Doc:      docSA4016,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer, lintdsl.TokenFileAnalyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4017": &analysis.Analyzer{
+	"SA4017": {
 		Name:     "SA4017",
 		Run:      CheckPureFunctions,
 		Doc:      docSA4017,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4018": &analysis.Analyzer{
+	"SA4018": {
 		Name:     "SA4018",
 		Run:      CheckSelfAssignment,
 		Doc:      docSA4018,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4019": &analysis.Analyzer{
-		Name: "SA4019",
-		Run:  CheckDuplicateBuildConstraints,
-		Doc:  docSA4019,
+	"SA4019": {
+		Name:  "SA4019",
+		Run:   CheckDuplicateBuildConstraints,
+		Doc:   docSA4019,
+		Flags: newFlagSet(),
 	},
-	"SA4020": &analysis.Analyzer{
+	"SA4020": {
 		Name:     "SA4020",
 		Run:      CheckUnreachableTypeCases,
 		Doc:      docSA4020,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA4021": &analysis.Analyzer{
+	"SA4021": {
 		Name:     "SA4021",
 		Run:      CheckSingleArgAppend,
 		Doc:      docSA4021,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA5000": &analysis.Analyzer{
+	"SA5000": {
 		Name:     "SA5000",
 		Run:      CheckNilMaps,
 		Doc:      docSA5000,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5001": &analysis.Analyzer{
+	"SA5001": {
 		Name:     "SA5001",
 		Run:      CheckEarlyDefer,
 		Doc:      docSA5001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5002": &analysis.Analyzer{
+	"SA5002": {
 		Name:     "SA5002",
 		Run:      CheckInfiniteEmptyLoop,
 		Doc:      docSA5002,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5003": &analysis.Analyzer{
+	"SA5003": {
 		Name:     "SA5003",
 		Run:      CheckDeferInInfiniteLoop,
 		Doc:      docSA5003,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5004": &analysis.Analyzer{
+	"SA5004": {
 		Name:     "SA5004",
 		Run:      CheckLoopEmptyDefault,
 		Doc:      docSA5004,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5005": &analysis.Analyzer{
+	"SA5005": {
 		Name:     "SA5005",
 		Run:      CheckCyclicFinalizer,
 		Doc:      docSA5005,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5007": &analysis.Analyzer{
+	"SA5007": {
 		Name:     "SA5007",
 		Run:      CheckInfiniteRecursion,
 		Doc:      docSA5007,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5008": &analysis.Analyzer{
+	"SA5008": {
 		Name:     "SA5008",
 		Run:      CheckStructTags,
 		Doc:      `XXX`,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA5009": &analysis.Analyzer{
+	"SA5009": {
 		Name:     "SA5009",
 		Run:      callChecker(checkPrintfRules),
 		Doc:      `XXX`,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA6000": &analysis.Analyzer{
+	"SA6000": {
 		Name:     "SA6000",
 		Run:      callChecker(checkRegexpMatchLoopRules),
 		Doc:      docSA6000,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA6001": &analysis.Analyzer{
+	"SA6001": {
 		Name:     "SA6001",
 		Run:      CheckMapBytesKey,
 		Doc:      docSA6001,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA6002": &analysis.Analyzer{
+	"SA6002": {
 		Name:     "SA6002",
 		Run:      callChecker(checkSyncPoolValueRules),
 		Doc:      docSA6002,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA6003": &analysis.Analyzer{
+	"SA6003": {
 		Name:     "SA6003",
 		Run:      CheckRangeStringRunes,
 		Doc:      docSA6003,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA6005": &analysis.Analyzer{
+	"SA6005": {
 		Name:     "SA6005",
 		Run:      CheckToLowerToUpperComparison,
 		Doc:      docSA6005,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
 
-	"SA9001": &analysis.Analyzer{
+	"SA9001": {
 		Name:     "SA9001",
 		Run:      CheckDubiousDeferInChannelRangeLoop,
 		Doc:      docSA9001,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA9002": &analysis.Analyzer{
+	"SA9002": {
 		Name:     "SA9002",
 		Run:      CheckNonOctalFileMode,
 		Doc:      docSA9002,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA9003": &analysis.Analyzer{
+	"SA9003": {
 		Name:     "SA9003",
 		Run:      CheckEmptyBranch,
 		Doc:      docSA9003,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer, lintdsl.TokenFileAnalyzer},
+		Flags:    newFlagSet(),
 	},
-	"SA9004": &analysis.Analyzer{
+	"SA9004": {
 		Name:     "SA9004",
 		Run:      CheckMissingEnumTypesInDeclaration,
 		Doc:      docSA9004,
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Flags:    newFlagSet(),
 	},
 	// Filtering generated code because it may include empty structs generated from data models.
-	"SA9005": &analysis.Analyzer{
+	"SA9005": {
 		Name:     "SA9005",
 		Run:      callChecker(checkNoopMarshal),
 		Doc:      docSA9005,
 		Requires: []*analysis.Analyzer{buildssa.Analyzer},
+		Flags:    newFlagSet(),
 	},
 }
