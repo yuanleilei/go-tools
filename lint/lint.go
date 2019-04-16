@@ -198,10 +198,6 @@ func (l *Linter) ignore(p Problem) bool {
 	return false
 }
 
-func (j *Job) File(node Positioner) *ast.File {
-	return j.Pkg.tokenFileMap[j.Pkg.Fset.File(node.Pos())]
-}
-
 func parseDirective(s string) (cmd string, args []string) {
 	if !strings.HasPrefix(s, "//lint:") {
 		return "", nil
