@@ -1,6 +1,8 @@
 package staticcheck
 
 import (
+	"reflect"
+
 	"golang.org/x/tools/go/analysis"
 	"honnef.co/go/tools/internal/passes/buildssa"
 	"honnef.co/go/tools/ssa"
@@ -18,5 +20,6 @@ var valueRangesAnalyzer = &analysis.Analyzer{
 		}
 		return m, nil
 	},
-	Requires: []*analysis.Analyzer{buildssa.Analyzer},
+	Requires:   []*analysis.Analyzer{buildssa.Analyzer},
+	ResultType: reflect.TypeOf(map[*ssa.Function]vrp.Ranges{}),
 }

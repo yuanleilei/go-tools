@@ -8,41 +8,7 @@ import (
 	"honnef.co/go/tools/ssa"
 )
 
-var stdlibDescs = map[string]Description{
-	"errors.New": {Pure: true},
-
-	"fmt.Errorf":  {Pure: true},
-	"fmt.Sprintf": {Pure: true},
-	"fmt.Sprint":  {Pure: true},
-
-	"sort.Reverse": {Pure: true},
-
-	"strings.Map":            {Pure: true},
-	"strings.Repeat":         {Pure: true},
-	"strings.Replace":        {Pure: true},
-	"strings.Title":          {Pure: true},
-	"strings.ToLower":        {Pure: true},
-	"strings.ToLowerSpecial": {Pure: true},
-	"strings.ToTitle":        {Pure: true},
-	"strings.ToTitleSpecial": {Pure: true},
-	"strings.ToUpper":        {Pure: true},
-	"strings.ToUpperSpecial": {Pure: true},
-	"strings.Trim":           {Pure: true},
-	"strings.TrimFunc":       {Pure: true},
-	"strings.TrimLeft":       {Pure: true},
-	"strings.TrimLeftFunc":   {Pure: true},
-	"strings.TrimPrefix":     {Pure: true},
-	"strings.TrimRight":      {Pure: true},
-	"strings.TrimRightFunc":  {Pure: true},
-	"strings.TrimSpace":      {Pure: true},
-	"strings.TrimSuffix":     {Pure: true},
-
-	"(*net/http.Request).WithContext": {Pure: true},
-}
-
 type Description struct {
-	// The function is known to be pure
-	Pure  bool
 	Loops []Loop
 }
 
@@ -74,11 +40,7 @@ func (d *Descriptions) Get(fn *ssa.Function) Description {
 		d.cache[fn] = fd
 		d.mu.Unlock()
 
-		{
-			fd.result = stdlibDescs[fn.RelString(nil)]
-			fd.result.Pure = fd.result.Pure || d.IsPure(fn)
-			fd.result.Loops = findLoops(fn)
-		}
+		fd.result.Loops = findLoops(fn)
 
 		close(fd.ready)
 	} else {
