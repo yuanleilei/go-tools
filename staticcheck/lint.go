@@ -19,6 +19,7 @@ import (
 	"unicode"
 
 	. "honnef.co/go/tools/arg"
+	"honnef.co/go/tools/deprecated"
 	"honnef.co/go/tools/functions"
 	"honnef.co/go/tools/internal/passes/buildssa"
 	"honnef.co/go/tools/internal/sharedcheck"
@@ -734,8 +735,11 @@ func fieldPath(start types.Type, indices []int) string {
 	return p
 }
 
-/*
-func (c *Checker) findDeprecated(prog *lint.Program) {
+type IsDeprecated struct{ Msg string }
+
+func (*IsDeprecated) AFact() {}
+
+func checkDeprecatedMark(pass *analysis.Pass) {
 	var names []*ast.Ident
 
 	extractDeprecatedMessage := func(docs []*ast.CommentGroup) string {
@@ -754,120 +758,90 @@ func (c *Checker) findDeprecated(prog *lint.Program) {
 		}
 		return ""
 	}
-	doDocs := func(pkg *packages.Package, names []*ast.Ident, docs []*ast.CommentGroup) {
+	doDocs := func(names []*ast.Ident, docs []*ast.CommentGroup) {
 		alt := extractDeprecatedMessage(docs)
 		if alt == "" {
 			return
 		}
 
 		for _, name := range names {
-			obj := pkg.TypesInfo.ObjectOf(name)
-			c.deprecatedObjs[obj] = alt
+			obj := pass.TypesInfo.ObjectOf(name)
+			pass.ExportObjectFact(obj, &IsDeprecated{alt})
 		}
 	}
 
-	for _, pkg := range prog.AllPackages {
-		var docs []*ast.CommentGroup
-		for _, f := range pkg.Syntax {
-			docs = append(docs, f.Doc)
+	var docs []*ast.CommentGroup
+	for _, f := range pass.Files {
+		docs = append(docs, f.Doc)
+	}
+	if alt := extractDeprecatedMessage(docs); alt != "" {
+		// Don't mark package syscall as deprecated, even though
+		// it is. A lot of people still use it for simple
+		// constants like SIGKILL, and I am not comfortable
+		// telling them to use x/sys for that.
+		if pass.Pkg.Path() != "syscall" {
+			pass.ExportPackageFact(&IsDeprecated{alt})
 		}
-		if alt := extractDeprecatedMessage(docs); alt != "" {
-			// Don't mark package syscall as deprecated, even though
-			// it is. A lot of people still use it for simple
-			// constants like SIGKILL, and I am not comfortable
-			// telling them to use x/sys for that.
-			if pkg.PkgPath != "syscall" {
-				c.deprecatedPkgs[pkg.Types] = alt
-			}
-		}
+	}
 
-		docs = docs[:0]
-		for _, f := range pkg.Syntax {
-			fn := func(node ast.Node) bool {
-				if node == nil {
+	docs = docs[:0]
+	for _, f := range pass.Files {
+		fn := func(node ast.Node) bool {
+			if node == nil {
+				return true
+			}
+			var ret bool
+			switch node := node.(type) {
+			case *ast.GenDecl:
+				switch node.Tok {
+				case token.TYPE, token.CONST, token.VAR:
+					docs = append(docs, node.Doc)
 					return true
-				}
-				var ret bool
-				switch node := node.(type) {
-				case *ast.GenDecl:
-					switch node.Tok {
-					case token.TYPE, token.CONST, token.VAR:
-						docs = append(docs, node.Doc)
-						return true
-					default:
-						return false
-					}
-				case *ast.FuncDecl:
-					docs = append(docs, node.Doc)
-					names = []*ast.Ident{node.Name}
-					ret = false
-				case *ast.TypeSpec:
-					docs = append(docs, node.Doc)
-					names = []*ast.Ident{node.Name}
-					ret = true
-				case *ast.ValueSpec:
-					docs = append(docs, node.Doc)
-					names = node.Names
-					ret = false
-				case *ast.File:
-					return true
-				case *ast.StructType:
-					for _, field := range node.Fields.List {
-						doDocs(pkg, field.Names, []*ast.CommentGroup{field.Doc})
-					}
-					return false
-				case *ast.InterfaceType:
-					for _, field := range node.Methods.List {
-						doDocs(pkg, field.Names, []*ast.CommentGroup{field.Doc})
-					}
-					return false
 				default:
 					return false
 				}
-				if len(names) == 0 || len(docs) == 0 {
-					return ret
+			case *ast.FuncDecl:
+				docs = append(docs, node.Doc)
+				names = []*ast.Ident{node.Name}
+				ret = false
+			case *ast.TypeSpec:
+				docs = append(docs, node.Doc)
+				names = []*ast.Ident{node.Name}
+				ret = true
+			case *ast.ValueSpec:
+				docs = append(docs, node.Doc)
+				names = node.Names
+				ret = false
+			case *ast.File:
+				return true
+			case *ast.StructType:
+				for _, field := range node.Fields.List {
+					doDocs(field.Names, []*ast.CommentGroup{field.Doc})
 				}
-				doDocs(pkg, names, docs)
-
-				docs = docs[:0]
-				names = nil
+				return false
+			case *ast.InterfaceType:
+				for _, field := range node.Methods.List {
+					doDocs(field.Names, []*ast.CommentGroup{field.Doc})
+				}
+				return false
+			default:
+				return false
+			}
+			if len(names) == 0 || len(docs) == 0 {
 				return ret
 			}
-			ast.Inspect(f, fn)
+			doDocs(names, docs)
+
+			docs = docs[:0]
+			names = nil
+			return ret
 		}
+		ast.Inspect(f, fn)
 	}
 }
-*/
 
-/*
-func (c *Checker) Init(prog *lint.Program) {
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		c.funcDescs = functions.NewDescriptions(prog.SSA)
-		for _, fn := range prog.AllFunctions {
-			if fn.Blocks != nil {
-				applyStdlibKnowledge(fn)
-				ssa.OptimizeBlocks(fn)
-			}
-		}
-		wg.Done()
-	}()
-
-	go func() {
-		c.deprecatedPkgs = map[*types.Package]string{}
-		c.deprecatedObjs = map[types.Object]string{}
-		c.findDeprecated(prog)
-		wg.Done()
-	}()
-
-	wg.Wait()
-}
-*/
-
-/*
-func (c *Checker) isInLoop(b *ssa.BasicBlock) bool {
-	sets := c.funcDescs.Get(b.Parent()).Loops
+func isInLoop(b *ssa.BasicBlock) bool {
+	sets := functions.FindLoops(b.Parent())
 	for _, set := range sets {
 		if set[b] {
 			return true
@@ -875,7 +849,6 @@ func (c *Checker) isInLoop(b *ssa.BasicBlock) bool {
 	}
 	return false
 }
-*/
 
 /*
 func applyStdlibKnowledge(fn *ssa.Function) {
@@ -2925,23 +2898,25 @@ fnLoop:
 	return nil, nil
 }
 
-/*
 func isDeprecated(pass *analysis.Pass, ident *ast.Ident) (bool, string) {
 	obj := pass.TypesInfo.ObjectOf(ident)
 	if obj.Pkg() == nil {
 		return false, ""
 	}
-	alt := c.deprecatedObjs[obj]
-	return alt != "", alt
+	var depr IsDeprecated
+	if pass.ImportObjectFact(obj, &depr) {
+		return true, depr.Msg
+	}
+	return false, ""
 }
-*/
 
-/*
-func (c *Checker) CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
+func CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
+	checkDeprecatedMark(pass)
+
 	// Selectors can appear outside of function literals, e.g. when
 	// declaring package level variables.
 
-	var ssafn *ssa.Function
+	var tfn types.Object
 	stack := 0
 	fn := func(node ast.Node, push bool) bool {
 		if !push {
@@ -2950,10 +2925,10 @@ func (c *Checker) CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
 			stack++
 		}
 		if stack == 1 {
-			ssafn = nil
+			tfn = nil
 		}
 		if fn, ok := node.(*ast.FuncDecl); ok {
-			ssafn = j.Pkg.SSA.Prog.FuncValue(pass.TypesInfo.ObjectOf(fn.Name).(*types.Func))
+			tfn = pass.TypesInfo.ObjectOf(fn.Name)
 		}
 		sel, ok := node.(*ast.SelectorExpr)
 		if !ok {
@@ -2964,25 +2939,25 @@ func (c *Checker) CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
 		if obj.Pkg() == nil {
 			return true
 		}
-		nodePkg := j.Pkg.Types
-		if nodePkg == obj.Pkg() || obj.Pkg().Path()+"_test" == nodePkg.Path() {
+		if pass.Pkg == obj.Pkg() || obj.Pkg().Path()+"_test" == pass.Pkg.Path() {
 			// Don't flag stuff in our own package
 			return true
 		}
-		if ok, alt := c.isDeprecated(j, sel.Sel); ok {
+		if ok, alt := isDeprecated(pass, sel.Sel); ok {
 			// Look for the first available alternative, not the first
 			// version something was deprecated in. If a function was
 			// deprecated in Go 1.6, an alternative has been available
 			// already in 1.0, and we're targeting 1.2, it still
 			// makes sense to use the alternative from 1.0, to be
 			// future-proof.
-			minVersion := deprecated.Stdlib[SelectorName(j, sel)].AlternativeAvailableSince
-			if !IsGoVersion(j, minVersion) {
+			minVersion := deprecated.Stdlib[SelectorName(pass, sel)].AlternativeAvailableSince
+			if !IsGoVersion(pass, minVersion) {
 				return true
 			}
 
-			if ssafn != nil {
-				if _, ok := c.deprecatedObjs[ssafn.Object()]; ok {
+			if tfn != nil {
+				var depr IsDeprecated
+				if pass.ImportObjectFact(tfn, &depr) {
 					// functions that are deprecated may use deprecated
 					// symbols
 					return true
@@ -2993,22 +2968,28 @@ func (c *Checker) CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
 		}
 		return true
 	}
+
+	imps := map[string]*types.Package{}
+	for _, imp := range pass.Pkg.Imports() {
+		imps[imp.Path()] = imp
+	}
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(node ast.Node) bool {
 			if node, ok := node.(*ast.ImportSpec); ok {
 				p := node.Path.Value
 				path := p[1 : len(p)-1]
-				imp := j.Pkg.Imports[path]
-				if alt := c.deprecatedPkgs[imp.Types]; alt != "" {
-					pass.Reportf(node.Pos(), "Package %s is deprecated: %s", path, alt)
+				imp := imps[path]
+				var depr IsDeprecated
+				if pass.ImportPackageFact(imp, &depr) {
+					pass.Reportf(node.Pos(), "Package %s is deprecated: %s", path, depr.Msg)
 				}
 			}
 			return true
 		})
 	}
 	pass.ResultOf[inspect.Analyzer].(*inspector.Inspector).Nodes(nil, fn)
+	return nil, nil
 }
-*/
 
 func callChecker(rules map[string]CallCheck) func(pass *analysis.Pass) (interface{}, error) {
 	return func(pass *analysis.Pass) (interface{}, error) {
@@ -3143,17 +3124,13 @@ func CheckWriterBufferModified(pass *analysis.Pass) (interface{}, error) {
 
 func loopedRegexp(name string) CallCheck {
 	return func(call *Call) {
-		return
-		// XXX
-		/*
-			if len(extractConsts(call.Args[0].Value.Value)) == 0 {
-				return
-			}
-			if !call.Checker.isInLoop(call.Instr.Block()) {
-				return
-			}
-			call.Invalid(fmt.Sprintf("calling %s in a loop has poor performance, consider using regexp.Compile", name))
-		*/
+		if len(extractConsts(call.Args[0].Value.Value)) == 0 {
+			return
+		}
+		if !isInLoop(call.Instr.Block()) {
+			return
+		}
+		call.Invalid(fmt.Sprintf("calling %s in a loop has poor performance, consider using regexp.Compile", name))
 	}
 }
 

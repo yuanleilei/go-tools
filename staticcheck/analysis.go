@@ -143,7 +143,14 @@ var Analyzers = map[string]*analysis.Analyzer{
 		Requires: []*analysis.Analyzer{buildssa.Analyzer, valueRangesAnalyzer},
 		Flags:    newFlagSet(),
 	},
-	// "SA1019": {Name: "SA1019", Run: CheckDeprecated, Doc: docSA1019},
+	"SA1019": {
+		Name:      "SA1019",
+		Run:       CheckDeprecated,
+		Doc:       docSA1019,
+		Requires:  []*analysis.Analyzer{inspect.Analyzer},
+		Flags:     newFlagSet(),
+		FactTypes: []analysis.Fact{(*IsDeprecated)(nil)},
+	},
 	"SA1020": {
 		Name:     "SA1020",
 		Run:      callChecker(checkListenAddressRules),
