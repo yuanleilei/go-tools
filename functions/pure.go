@@ -13,7 +13,7 @@ import (
 // considered a stub if it has no instructions or exactly one
 // instruction, which must be either returning only constant values or
 // a panic.
-func (d *Descriptions) IsStub(fn *ssa.Function) bool {
+func IsStub(fn *ssa.Function) bool {
 	if len(fn.Blocks) == 0 {
 		return true
 	}

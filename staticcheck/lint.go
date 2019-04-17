@@ -19,6 +19,7 @@ import (
 	"unicode"
 
 	. "honnef.co/go/tools/arg"
+	"honnef.co/go/tools/functions"
 	"honnef.co/go/tools/internal/passes/buildssa"
 	"honnef.co/go/tools/internal/sharedcheck"
 	"honnef.co/go/tools/lint"
@@ -1572,6 +1573,7 @@ func CheckIneffectiveCopy(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckDiffSizeComparison(pass *analysis.Pass) (interface{}, error) {
+	ranges := pass.ResultOf[valueRangesAnalyzer].(map[*ssa.Function]vrp.Ranges)
 	for _, ssafn := range pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA).SrcFuncs {
 		for _, b := range ssafn.Blocks {
 			for _, ins := range b.Instrs {
@@ -1587,7 +1589,7 @@ func CheckDiffSizeComparison(pass *analysis.Pass) (interface{}, error) {
 				if !ok1 && !ok2 {
 					continue
 				}
-				r := funcDescs.Get(ssafn).Ranges
+				r := ranges[ssafn]
 				r1, ok1 := r.Get(binop.X).(vrp.StringInterval)
 				r2, ok2 := r.Get(binop.Y).(vrp.StringInterval)
 				if !ok1 || !ok2 {
@@ -2570,7 +2572,7 @@ func CheckLeakyTimeTick(pass *analysis.Pass) (interface{}, error) {
 				if !ok || !IsCallTo(call.Common(), "time.Tick") {
 					continue
 				}
-				if funcDescs.Get(call.Parent()).Infinite {
+				if !functions.Terminates(call.Parent()) {
 					continue
 				}
 				pass.Reportf(call.Pos(), "using time.Tick leaks the underlying ticker, consider using it only in endless functions, tests and the main package, and use time.NewTicker here")
@@ -2767,7 +2769,7 @@ fnLoop:
 				if callee == nil {
 					continue
 				}
-				if funcDescs.Get(callee).Pure && !funcDescs.Get(callee).Stub {
+				if funcDescs.Get(callee).Pure && !funcDescs.IsStub(callee) {
 					pass.Reportf(ins.Pos(), "%s is a pure function but its return value is ignored", callee.Name())
 					continue
 				}
@@ -2869,6 +2871,7 @@ func callChecker(rules map[string]CallCheck) func(pass *analysis.Pass) (interfac
 }
 
 func checkCalls(pass *analysis.Pass, rules map[string]CallCheck) (interface{}, error) {
+	ranges := pass.ResultOf[valueRangesAnalyzer].(map[*ssa.Function]vrp.Ranges)
 	fn := func(caller *ssa.Function, site ssa.CallInstruction, callee *ssa.Function) {
 		obj, ok := callee.Object().(*types.Func)
 		if !ok {
@@ -2888,7 +2891,7 @@ func checkCalls(pass *analysis.Pass, rules map[string]CallCheck) (interface{}, e
 			if iarg, ok := arg.(*ssa.MakeInterface); ok {
 				arg = iarg.X
 			}
-			vr := funcDescs.Get(site.Parent()).Ranges[arg]
+			vr := ranges[site.Parent()][arg]
 			args = append(args, &Argument{Value: Value{arg, vr}})
 		}
 		call := &Call{
