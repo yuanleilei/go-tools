@@ -22,31 +22,6 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
-/*
-func Checks() []lint.Check {
-	return []lint.Check{
-		{ID: "ST1000", FilterGenerated: false, Fn: c.CheckPackageComment, Doc: docST1000},
-		{ID: "ST1001", FilterGenerated: true, Fn: c.CheckDotImports, Doc: docST1001},
-		// {ID: "ST1002", FilterGenerated: true, Fn: c.CheckBlankImports, Doc: docST1002},
-		{ID: "ST1003", FilterGenerated: true, Fn: c.CheckNames, Doc: docST1003},
-		// {ID: "ST1004", FilterGenerated: false, Fn: nil, 			  , Doc: docST1004},
-		{ID: "ST1005", FilterGenerated: false, Fn: c.CheckErrorStrings, Doc: docST1005},
-		{ID: "ST1006", FilterGenerated: false, Fn: c.CheckReceiverNames, Doc: docST1006},
-		// {ID: "ST1007", FilterGenerated: true, Fn: c.CheckIncDec, Doc: docST1007},
-		{ID: "ST1008", FilterGenerated: false, Fn: c.CheckErrorReturn, Doc: docST1008},
-		// {ID: "ST1009", FilterGenerated: false, Fn: c.CheckUnexportedReturn, Doc: docST1009},
-		// {ID: "ST1010", FilterGenerated: false, Fn: c.CheckContextFirstArg, Doc: docST1010},
-		{ID: "ST1011", FilterGenerated: false, Fn: c.CheckTimeNames, Doc: docST1011},
-		{ID: "ST1012", FilterGenerated: false, Fn: c.CheckErrorVarNames, Doc: docST1012},
-		{ID: "ST1013", FilterGenerated: true, Fn: c.CheckHTTPStatusCodes, Doc: docST1013},
-		{ID: "ST1015", FilterGenerated: true, Fn: c.CheckDefaultCaseOrder, Doc: docST1015},
-		{ID: "ST1016", FilterGenerated: false, Fn: c.CheckReceiverNamesIdentical, Doc: docST1016},
-		{ID: "ST1017", FilterGenerated: true, Fn: c.CheckYodaConditions, Doc: docST1017},
-		{ID: "ST1018", FilterGenerated: false, Fn: c.CheckInvisibleCharacters, Doc: docST1018},
-	}
-}
-*/
-
 func CheckPackageComment(pass *analysis.Pass) (interface{}, error) {
 	// - At least one file in a non-main package should have a package comment
 	//

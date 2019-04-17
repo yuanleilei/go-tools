@@ -737,7 +737,8 @@ func fieldPath(start types.Type, indices []int) string {
 
 type IsDeprecated struct{ Msg string }
 
-func (*IsDeprecated) AFact() {}
+func (*IsDeprecated) AFact()           {}
+func (d *IsDeprecated) String() string { return "Deprecated: " + d.Msg }
 
 func checkDeprecatedMark(pass *analysis.Pass) {
 	var names []*ast.Ident
@@ -849,63 +850,6 @@ func isInLoop(b *ssa.BasicBlock) bool {
 	}
 	return false
 }
-
-/*
-func applyStdlibKnowledge(fn *ssa.Function) {
-	if len(fn.Blocks) == 0 {
-		return
-	}
-
-	// comma-ok receiving from a time.Tick channel will never return
-	// ok == false, so any branching on the value of ok can be
-	// replaced with an unconditional jump. This will primarily match
-	// `for range time.Tick(x)` loops, but it can also match
-	// user-written code.
-	for _, block := range fn.Blocks {
-		if len(block.Instrs) < 3 {
-			continue
-		}
-		if len(block.Succs) != 2 {
-			continue
-		}
-		var instrs []*ssa.Instruction
-		for i, ins := range block.Instrs {
-			if _, ok := ins.(*ssa.DebugRef); ok {
-				continue
-			}
-			instrs = append(instrs, &block.Instrs[i])
-		}
-
-		for i, ins := range instrs {
-			unop, ok := (*ins).(*ssa.UnOp)
-			if !ok || unop.Op != token.ARROW {
-				continue
-			}
-			call, ok := unop.X.(*ssa.Call)
-			if !ok {
-				continue
-			}
-			if !IsCallTo(call.Common(), "time.Tick") {
-				continue
-			}
-			ex, ok := (*instrs[i+1]).(*ssa.Extract)
-			if !ok || ex.Tuple != unop || ex.Index != 1 {
-				continue
-			}
-
-			ifstmt, ok := (*instrs[i+2]).(*ssa.If)
-			if !ok || ifstmt.Cond != ex {
-				continue
-			}
-
-			*instrs[i+2] = ssa.NewJump(block)
-			succ := block.Succs[1]
-			block.Succs = block.Succs[0:1]
-			succ.RemovePred(block)
-		}
-	}
-}
-*/
 
 func CheckUntrappableSignal(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
@@ -1578,7 +1522,10 @@ func CheckDiffSizeComparison(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckCanonicalHeaderKey(pass *analysis.Pass) (interface{}, error) {
-	fn := func(node ast.Node, _ bool) bool {
+	fn := func(node ast.Node, push bool) bool {
+		if !push {
+			return false
+		}
 		assign, ok := node.(*ast.AssignStmt)
 		if ok {
 			// TODO(dh): This risks missing some Header reads, for
@@ -2710,7 +2657,8 @@ func CheckNonOctalFileMode(pass *analysis.Pass) (interface{}, error) {
 
 type IsPure struct{}
 
-func (*IsPure) AFact() {}
+func (*IsPure) AFact()         {}
+func (*IsPure) String() string { return "IsPure" }
 
 var pureStdlib = map[string]struct{}{
 	"errors.New":                      {},
@@ -2768,6 +2716,10 @@ func checkPureFunctionsMark(pass *analysis.Pass) {
 				pass.ExportObjectFact(ssafn.Object(), &IsPure{})
 			}
 		}()
+
+		if functions.IsStub(ssafn) {
+			return false
+		}
 
 		if _, ok := pureStdlib[ssafn.Object().(*types.Func).FullName()]; ok {
 			return true
@@ -2888,7 +2840,7 @@ fnLoop:
 					// TODO(dh): support anonymous functions
 					continue
 				}
-				if pass.ImportObjectFact(callee.Object(), new(IsPure)) && !functions.IsStub(callee) {
+				if pass.ImportObjectFact(callee.Object(), new(IsPure)) {
 					pass.Reportf(ins.Pos(), "%s is a pure function but its return value is ignored", callee.Name())
 					continue
 				}
@@ -2921,9 +2873,9 @@ func CheckDeprecated(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node, push bool) bool {
 		if !push {
 			stack--
-		} else {
-			stack++
+			return false
 		}
+		stack++
 		if stack == 1 {
 			tfn = nil
 		}

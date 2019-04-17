@@ -31,6 +31,41 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+func NewVersionFlag() flag.Getter {
+	tags := build.Default.ReleaseTags
+	v := tags[len(tags)-1][2:]
+	version := new(VersionFlag)
+	if err := version.Set(v); err != nil {
+		panic(fmt.Sprintf("internal error: %s", err))
+	}
+	return version
+}
+
+type VersionFlag int
+
+func (v *VersionFlag) String() string {
+	return fmt.Sprintf("1.%d", *v)
+}
+
+func (v *VersionFlag) Set(s string) error {
+	if len(s) < 3 {
+		return errors.New("invalid Go version")
+	}
+	if s[0] != '1' {
+		return errors.New("invalid Go version")
+	}
+	if s[1] != '.' {
+		return errors.New("invalid Go version")
+	}
+	i, err := strconv.Atoi(s[2:])
+	*v = VersionFlag(i)
+	return err
+}
+
+func (v *VersionFlag) Get() interface{} {
+	return int(*v)
+}
+
 func usage(name string, flags *flag.FlagSet) func() {
 	return func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", name)

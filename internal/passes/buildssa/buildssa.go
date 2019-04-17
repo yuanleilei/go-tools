@@ -72,6 +72,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	// Compute list of source functions, including literals,
 	// in source order.
 	var funcs []*ssa.Function
+	var addAnons func(f *ssa.Function)
+	addAnons = func(f *ssa.Function) {
+		funcs = append(funcs, f)
+		for _, anon := range f.AnonFuncs {
+			addAnons(anon)
+		}
+	}
+	addAnons(ssapkg.Members["init"].(*ssa.Function))
 	for _, f := range pass.Files {
 		for _, decl := range f.Decls {
 			if fdecl, ok := decl.(*ast.FuncDecl); ok {
@@ -99,13 +107,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					panic(fn)
 				}
 
-				var addAnons func(f *ssa.Function)
-				addAnons = func(f *ssa.Function) {
-					funcs = append(funcs, f)
-					for _, anon := range f.AnonFuncs {
-						addAnons(anon)
-					}
-				}
 				addAnons(f)
 			}
 		}

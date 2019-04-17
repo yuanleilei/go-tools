@@ -5,6 +5,7 @@ import (
 
 	"honnef.co/go/tools/internal/passes/buildssa"
 	"honnef.co/go/tools/lint/lintdsl"
+	"honnef.co/go/tools/lint/lintutil"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -12,7 +13,7 @@ import (
 
 func newFlagSet() flag.FlagSet {
 	fs := flag.NewFlagSet("", flag.PanicOnError)
-	fs.Int("go", 0, "Target minor Go version")
+	fs.Var(lintutil.NewVersionFlag(), "go", "Target Go version")
 	return *fs
 }
 
