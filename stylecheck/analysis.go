@@ -5,16 +5,21 @@ import (
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
+	"honnef.co/go/tools/config"
 	"honnef.co/go/tools/internal/passes/buildssa"
 	"honnef.co/go/tools/lint"
 )
 
 func newFlagSet() flag.FlagSet {
+	statusCodes := append(lint.StringSliceVar{}, config.DefaultConfig.HTTPStatusCodeWhitelist...)
+	initialisms := append(lint.StringSliceVar{}, config.DefaultConfig.Initialisms...)
+	dotImports := append(lint.StringSliceVar{}, config.DefaultConfig.DotImportWhitelist...)
+
 	fs := flag.NewFlagSet("", flag.PanicOnError)
 	fs.Int("go", 0, "Target minor Go version")
-	fs.Var(new(lint.StringSliceVar), "dot-import-whitelist", "")
-	fs.Var(new(lint.StringSliceVar), "http-status-code-whitelist", "")
-	fs.Var(new(lint.StringSliceVar), "initialisms", "")
+	fs.Var(&dotImports, "dot-import-whitelist", "")
+	fs.Var(&statusCodes, "http-status-code-whitelist", "")
+	fs.Var(&initialisms, "initialisms", "")
 	return *fs
 }
 

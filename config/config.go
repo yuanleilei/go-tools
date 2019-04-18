@@ -73,7 +73,7 @@ type Config struct {
 	HTTPStatusCodeWhitelist []string `toml:"http_status_code_whitelist"`
 }
 
-var defaultConfig = Config{
+var DefaultConfig = Config{
 	Checks: []string{"all", "-ST1000", "-ST1003", "-ST1016"},
 	Initialisms: []string{
 		"ACL", "API", "ASCII", "CPU", "CSS", "DNS",
@@ -120,7 +120,7 @@ func parseConfigs(dir string) ([]Config, error) {
 		}
 		dir = ndir
 	}
-	out = append(out, defaultConfig)
+	out = append(out, DefaultConfig)
 	if len(out) < 2 {
 		return out, nil
 	}
