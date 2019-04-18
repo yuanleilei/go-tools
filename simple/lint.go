@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"reflect"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -1602,6 +1603,11 @@ func isPermissibleSort(pass *analysis.Pass, node ast.Node) bool {
 }
 
 func LintSortHelpers(pass *analysis.Pass) (interface{}, error) {
+	type Error struct {
+		node lint.Positioner
+		msg  string
+	}
+	var allErrors []Error
 	fn := func(node ast.Node) {
 		var body *ast.BlockStmt
 		switch node := node.(type) {
@@ -1616,10 +1622,6 @@ func LintSortHelpers(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		type Error struct {
-			node lint.Positioner
-			msg  string
-		}
 		var errors []Error
 		permissible := false
 		fnSorts := func(node ast.Node) bool {
@@ -1653,12 +1655,20 @@ func LintSortHelpers(pass *analysis.Pass) (interface{}, error) {
 		if permissible {
 			return
 		}
-		for _, err := range errors {
-			pass.Reportf(err.node.Pos(), "%s", err.msg)
-		}
-		return
+		allErrors = append(allErrors, errors...)
 	}
 	pass.ResultOf[inspect.Analyzer].(*inspector.Inspector).Preorder([]ast.Node{(*ast.FuncLit)(nil), (*ast.FuncDecl)(nil)}, fn)
+	sort.Slice(allErrors, func(i, j int) bool {
+		return allErrors[i].node.Pos() < allErrors[j].node.Pos()
+	})
+	var prev token.Pos
+	for _, err := range allErrors {
+		if err.node.Pos() == prev {
+			continue
+		}
+		prev = err.node.Pos()
+		pass.Reportf(err.node.Pos(), "%s", err.msg)
+	}
 	return nil, nil
 }
 

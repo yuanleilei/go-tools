@@ -103,7 +103,9 @@ func TestAll(t *testing.T) {
 		a := Analyzers[check]
 		for _, dir := range dirs {
 			if dir.version != "" {
-				a.Flags.Lookup("go").Value.Set(dir.version)
+				if err := a.Flags.Lookup("go").Value.Set(dir.version); err != nil {
+					t.Fatal(err)
+				}
 			}
 			analysistest.Run(t, analysistest.TestData(), a, dir.dir)
 		}
