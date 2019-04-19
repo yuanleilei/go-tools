@@ -38,10 +38,11 @@ var Analyzers = map[string]*analysis.Analyzer{
 		Flags:    newFlagSet(),
 	},
 	"ST1003": {
-		Name:  "ST1003",
-		Run:   CheckNames,
-		Doc:   docST1003,
-		Flags: newFlagSet(),
+		Name:     "ST1003",
+		Run:      CheckNames,
+		Doc:      docST1003,
+		Requires: []*analysis.Analyzer{lint.IsGeneratedAnalyzer},
+		Flags:    newFlagSet(),
 	},
 	"ST1005": {
 		Name:     "ST1005",

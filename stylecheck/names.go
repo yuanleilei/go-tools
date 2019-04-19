@@ -80,6 +80,9 @@ func CheckNames(pass *analysis.Pass) (interface{}, error) {
 		initialisms[word] = true
 	}
 	for _, f := range pass.Files {
+		if IsGenerated(pass, f) {
+			continue
+		}
 		// Package names need slightly different handling than other names.
 		if !strings.HasSuffix(f.Name.Name, "_test") && strings.Contains(f.Name.Name, "_") {
 			pass.Reportf(f.Pos(), "should not use underscores in package names")
