@@ -354,11 +354,24 @@ func flattenFields(T *types.Struct, path []int, seen map[types.Type]bool) []Fiel
 }
 
 func File(pass *analysis.Pass, node lint.Positioner) *ast.File {
+	pass.Fset.PositionFor(node.Pos(), true)
 	m := pass.ResultOf[lint.TokenFileAnalyzer].(map[*token.File]*ast.File)
 	return m[pass.Fset.File(node.Pos())]
 }
 
-func IsGenerated(pass *analysis.Pass, f *ast.File) bool {
-	m := pass.ResultOf[lint.IsGeneratedAnalyzer].(map[*ast.File]bool)
-	return m[f]
+// IsGenerated reports whether pos is in a generated file, It ignores
+// //line directives.
+func IsGenerated(pass *analysis.Pass, pos token.Pos) bool {
+	file := pass.Fset.PositionFor(pos, false).Filename
+	m := pass.ResultOf[lint.IsGeneratedAnalyzer].(map[string]bool)
+	return m[file]
+}
+
+func ReportfFG(pass *analysis.Pass, pos token.Pos, f string, args ...interface{}) {
+	file := lint.DisplayPosition(pass.Fset, pos).Filename
+	m := pass.ResultOf[lint.IsGeneratedAnalyzer].(map[string]bool)
+	if m[file] {
+		return
+	}
+	pass.Reportf(pos, f, args...)
 }

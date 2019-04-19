@@ -62,9 +62,6 @@ func CheckPackageComment(pass *analysis.Pass) (interface{}, error) {
 
 func CheckDotImports(pass *analysis.Pass) (interface{}, error) {
 	for _, f := range pass.Files {
-		if IsGenerated(pass, f) {
-			continue
-		}
 	imports:
 		for _, imp := range f.Imports {
 			path := imp.Path.Value
@@ -77,7 +74,7 @@ func CheckDotImports(pass *analysis.Pass) (interface{}, error) {
 			}
 
 			if imp.Name != nil && imp.Name.Name == "." && !IsInTest(pass, f) {
-				pass.Reportf(imp.Pos(), "should not use dot imports")
+				ReportfFG(pass, imp.Pos(), "should not use dot imports")
 			}
 		}
 	}
@@ -537,11 +534,6 @@ func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
 		if node == nil {
 			return true
 		}
-		// OPT(dh): we could filter the entire file at once instead of
-		// individual nodes
-		if IsGenerated(pass, File(pass, node)) {
-			return false
-		}
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
@@ -576,7 +568,7 @@ func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
 		if !ok {
 			return true
 		}
-		pass.Reportf(lit.Pos(), "should use constant http.%s instead of numeric literal %d", s, n)
+		ReportfFG(pass, lit.Pos(), "should use constant http.%s instead of numeric literal %d", s, n)
 		return true
 	}
 	// OPT(dh): replace with inspector
@@ -588,16 +580,11 @@ func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
 
 func CheckDefaultCaseOrder(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
-		// OPT(dh): we could filter the entire file at once instead of
-		// individual nodes
-		if IsGenerated(pass, File(pass, node)) {
-			return
-		}
 		stmt := node.(*ast.SwitchStmt)
 		list := stmt.Body.List
 		for i, c := range list {
 			if c.(*ast.CaseClause).List == nil && i != 0 && i != len(list)-1 {
-				pass.Reportf(c.Pos(), "default case should be first or last in switch statement")
+				ReportfFG(pass, c.Pos(), "default case should be first or last in switch statement")
 				break
 			}
 		}
@@ -608,11 +595,6 @@ func CheckDefaultCaseOrder(pass *analysis.Pass) (interface{}, error) {
 
 func CheckYodaConditions(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
-		// OPT(dh): we could filter the entire file at once instead of
-		// individual nodes
-		if IsGenerated(pass, File(pass, node)) {
-			return
-		}
 		cond := node.(*ast.BinaryExpr)
 		if cond.Op != token.EQL && cond.Op != token.NEQ {
 			return
@@ -624,7 +606,7 @@ func CheckYodaConditions(pass *analysis.Pass) (interface{}, error) {
 			// Don't flag lit == lit conditions, just in case
 			return
 		}
-		pass.Reportf(cond.Pos(), "don't use Yoda conditions")
+		ReportfFG(pass, cond.Pos(), "don't use Yoda conditions")
 	}
 	pass.ResultOf[inspect.Analyzer].(*inspector.Inspector).Preorder([]ast.Node{(*ast.BinaryExpr)(nil)}, fn)
 	return nil, nil

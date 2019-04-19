@@ -652,7 +652,7 @@ func checkAtomicAlignmentImpl(call *Call) {
 
 func checkNoopMarshalImpl(argN int, meths ...string) CallCheck {
 	return func(call *Call) {
-		if IsGenerated(call.Pass, File(call.Pass, call.Parent.Syntax())) {
+		if IsGenerated(call.Pass, File(call.Pass, call.Parent.Syntax()).Pos()) {
 			return
 		}
 		arg := call.Args[argN]
@@ -1223,7 +1223,7 @@ func CheckLhsRhsIdentical(pass *analysis.Pass) (interface{}, error) {
 		}
 		l1, ok1 := op.X.(*ast.BasicLit)
 		l2, ok2 := op.Y.(*ast.BasicLit)
-		if ok1 && ok2 && l1.Kind == token.INT && l2.Kind == l1.Kind && l1.Value == "0" && l2.Value == l1.Value && IsGenerated(pass, File(pass, l1)) {
+		if ok1 && ok2 && l1.Kind == token.INT && l2.Kind == l1.Kind && l1.Value == "0" && l2.Value == l1.Value && IsGenerated(pass, File(pass, l1).Pos()) {
 			// cgo generates the following function call:
 			// _cgoCheckPointer(_cgoBase0, 0 == 0) – it uses 0 == 0
 			// instead of true in case the user shadowed the
@@ -3092,9 +3092,6 @@ func CheckEmptyBranch(pass *analysis.Pass) (interface{}, error) {
 		if ssafn.Syntax() == nil {
 			continue
 		}
-		if IsGenerated(pass, File(pass, ssafn.Syntax())) {
-			continue
-		}
 		if IsExample(ssafn) {
 			continue
 		}
@@ -3108,12 +3105,12 @@ func CheckEmptyBranch(pass *analysis.Pass) (interface{}, error) {
 				if !ok || len(b.List) != 0 {
 					return true
 				}
-				pass.Reportf(ifstmt.Else.Pos(), "empty branch")
+				ReportfFG(pass, ifstmt.Else.Pos(), "empty branch")
 			}
 			if len(ifstmt.Body.List) != 0 {
 				return true
 			}
-			pass.Reportf(ifstmt.Pos(), "empty branch")
+			ReportfFG(pass, ifstmt.Pos(), "empty branch")
 			return true
 		}
 		Inspect(ssafn.Syntax(), fn)
@@ -3179,11 +3176,6 @@ func CheckRangeStringRunes(pass *analysis.Pass) (interface{}, error) {
 
 func CheckSelfAssignment(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
-		// OPT(dh): we could filter the entire file at once instead of
-		// individual nodes
-		if IsGenerated(pass, File(pass, node)) {
-			return
-		}
 		assign := node.(*ast.AssignStmt)
 		if assign.Tok != token.ASSIGN || len(assign.Lhs) != len(assign.Rhs) {
 			return
@@ -3192,7 +3184,7 @@ func CheckSelfAssignment(pass *analysis.Pass) (interface{}, error) {
 			rlh := Render(pass, stmt)
 			rrh := Render(pass, assign.Rhs[i])
 			if rlh == rrh {
-				pass.Reportf(assign.Pos(), "self-assignment of %s to %s", rrh, rlh)
+				ReportfFG(pass, assign.Pos(), "self-assignment of %s to %s", rrh, rlh)
 			}
 		}
 	}
@@ -3220,9 +3212,6 @@ func buildTagsIdentical(s1, s2 []string) bool {
 
 func CheckDuplicateBuildConstraints(pass *analysis.Pass) (interface{}, error) {
 	for _, f := range pass.Files {
-		if IsGenerated(pass, f) {
-			continue
-		}
 		constraints := buildTags(f)
 		for i, constraint1 := range constraints {
 			for j, constraint2 := range constraints {
@@ -3230,7 +3219,7 @@ func CheckDuplicateBuildConstraints(pass *analysis.Pass) (interface{}, error) {
 					continue
 				}
 				if buildTagsIdentical(constraint1, constraint2) {
-					pass.Reportf(f.Pos(), "identical build constraints %q and %q",
+					ReportfFG(pass, f.Pos(), "identical build constraints %q and %q",
 						strings.Join(constraint1, " "),
 						strings.Join(constraint2, " "))
 				}
@@ -3497,12 +3486,6 @@ func CheckUnreachableTypeCases(pass *analysis.Pass) (interface{}, error) {
 
 func CheckSingleArgAppend(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
-		// OPT(dh): we could filter the entire file at once instead of
-		// individual nodes
-		if IsGenerated(pass, File(pass, node)) {
-			return
-		}
-
 		if !IsCallToAST(pass, node, "append") {
 			return
 		}
@@ -3510,7 +3493,7 @@ func CheckSingleArgAppend(pass *analysis.Pass) (interface{}, error) {
 		if len(call.Args) != 1 {
 			return
 		}
-		pass.Reportf(call.Pos(), "x = append(y) is equivalent to x = y")
+		ReportfFG(pass, call.Pos(), "x = append(y) is equivalent to x = y")
 	}
 	pass.ResultOf[inspect.Analyzer].(*inspector.Inspector).Preorder([]ast.Node{(*ast.CallExpr)(nil)}, fn)
 	return nil, nil
