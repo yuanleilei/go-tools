@@ -61,8 +61,10 @@ func CheckPackageComment(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckDotImports(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterGenerated
 	for _, f := range pass.Files {
+		if IsGenerated(pass, f) {
+			continue
+		}
 	imports:
 		for _, imp := range f.Imports {
 			path := imp.Path.Value
@@ -526,14 +528,20 @@ var httpStatusCodes = map[int]string{
 }
 
 func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterGenerated
-
 	whitelist := map[string]bool{}
 	wl := pass.Analyzer.Flags.Lookup("http-status-code-whitelist").Value.(flag.Getter).Get().([]string)
 	for _, code := range wl {
 		whitelist[code] = true
 	}
 	fn := func(node ast.Node) bool {
+		if node == nil {
+			return true
+		}
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return false
+		}
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
@@ -571,6 +579,7 @@ func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
 		pass.Reportf(lit.Pos(), "should use constant http.%s instead of numeric literal %d", s, n)
 		return true
 	}
+	// OPT(dh): replace with inspector
 	for _, f := range pass.Files {
 		ast.Inspect(f, fn)
 	}
@@ -578,9 +587,12 @@ func CheckHTTPStatusCodes(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckDefaultCaseOrder(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterGenerated
-
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		stmt := node.(*ast.SwitchStmt)
 		list := stmt.Body.List
 		for i, c := range list {
@@ -595,9 +607,12 @@ func CheckDefaultCaseOrder(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckYodaConditions(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterGenerated
-
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		cond := node.(*ast.BinaryExpr)
 		if cond.Op != token.EQL && cond.Op != token.NEQ {
 			return

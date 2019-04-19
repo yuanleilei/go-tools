@@ -211,8 +211,6 @@ var (
 	}
 
 	checkNoopMarshal = map[string]CallCheck{
-		// XXX FilterDeprecated
-
 		// TODO(dh): should we really flag XML? Even an empty struct
 		// produces a non-zero amount of data, namely its type name.
 		// Let's see if we encounter any false positives.
@@ -654,6 +652,9 @@ func checkAtomicAlignmentImpl(call *Call) {
 
 func checkNoopMarshalImpl(argN int, meths ...string) CallCheck {
 	return func(call *Call) {
+		if IsGenerated(call.Pass, File(call.Pass, call.Parent.Syntax())) {
+			return
+		}
 		arg := call.Args[argN]
 		T := arg.Value.Value.Type()
 		Ts, ok := Dereference(T).Underlying().(*types.Struct)
@@ -1222,7 +1223,7 @@ func CheckLhsRhsIdentical(pass *analysis.Pass) (interface{}, error) {
 		}
 		l1, ok1 := op.X.(*ast.BasicLit)
 		l2, ok2 := op.Y.(*ast.BasicLit)
-		if ok1 && ok2 && l1.Kind == token.INT && l2.Kind == l1.Kind && l1.Value == "0" && l2.Value == l1.Value && IsGenerated(File(pass, l1)) {
+		if ok1 && ok2 && l1.Kind == token.INT && l2.Kind == l1.Kind && l1.Value == "0" && l2.Value == l1.Value && IsGenerated(pass, File(pass, l1)) {
 			// cgo generates the following function call:
 			// _cgoCheckPointer(_cgoBase0, 0 == 0) – it uses 0 == 0
 			// instead of true in case the user shadowed the
@@ -3091,7 +3092,7 @@ func CheckEmptyBranch(pass *analysis.Pass) (interface{}, error) {
 		if ssafn.Syntax() == nil {
 			continue
 		}
-		if IsGenerated(File(pass, ssafn.Syntax())) {
+		if IsGenerated(pass, File(pass, ssafn.Syntax())) {
 			continue
 		}
 		if IsExample(ssafn) {
@@ -3177,8 +3178,12 @@ func CheckRangeStringRunes(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckSelfAssignment(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterDeprecated
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		assign := node.(*ast.AssignStmt)
 		if assign.Tok != token.ASSIGN || len(assign.Lhs) != len(assign.Rhs) {
 			return
@@ -3214,8 +3219,10 @@ func buildTagsIdentical(s1, s2 []string) bool {
 }
 
 func CheckDuplicateBuildConstraints(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterDeprecated
 	for _, f := range pass.Files {
+		if IsGenerated(pass, f) {
+			continue
+		}
 		constraints := buildTags(f)
 		for i, constraint1 := range constraints {
 			for j, constraint2 := range constraints {
@@ -3489,8 +3496,13 @@ func CheckUnreachableTypeCases(pass *analysis.Pass) (interface{}, error) {
 }
 
 func CheckSingleArgAppend(pass *analysis.Pass) (interface{}, error) {
-	// XXX FilterDeprecated
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
+
 		if !IsCallToAST(pass, node, "append") {
 			return
 		}

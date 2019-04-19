@@ -31,10 +31,11 @@ var Analyzers = map[string]*analysis.Analyzer{
 		Flags: newFlagSet(),
 	},
 	"ST1001": {
-		Name:  "ST1001",
-		Run:   CheckDotImports,
-		Doc:   docST1001,
-		Flags: newFlagSet(),
+		Name:     "ST1001",
+		Run:      CheckDotImports,
+		Doc:      docST1001,
+		Requires: []*analysis.Analyzer{lint.IsGeneratedAnalyzer},
+		Flags:    newFlagSet(),
 	},
 	"ST1003": {
 		Name:  "ST1003",
@@ -76,16 +77,17 @@ var Analyzers = map[string]*analysis.Analyzer{
 		Flags: newFlagSet(),
 	},
 	"ST1013": {
-		Name:  "ST1013",
-		Run:   CheckHTTPStatusCodes,
-		Doc:   docST1013,
-		Flags: newFlagSet(),
+		Name:     "ST1013",
+		Run:      CheckHTTPStatusCodes,
+		Doc:      docST1013,
+		Requires: []*analysis.Analyzer{lint.IsGeneratedAnalyzer, lint.TokenFileAnalyzer},
+		Flags:    newFlagSet(),
 	},
 	"ST1015": {
 		Name:     "ST1015",
 		Run:      CheckDefaultCaseOrder,
 		Doc:      docST1015,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Requires: []*analysis.Analyzer{inspect.Analyzer, lint.IsGeneratedAnalyzer, lint.TokenFileAnalyzer},
 		Flags:    newFlagSet(),
 	},
 	"ST1016": {
@@ -99,7 +101,7 @@ var Analyzers = map[string]*analysis.Analyzer{
 		Name:     "ST1017",
 		Run:      CheckYodaConditions,
 		Doc:      docST1017,
-		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Requires: []*analysis.Analyzer{inspect.Analyzer, lint.IsGeneratedAnalyzer, lint.TokenFileAnalyzer},
 		Flags:    newFlagSet(),
 	},
 	"ST1018": {

@@ -31,6 +31,11 @@ func LintSingleCaseSelect(pass *analysis.Pass) (interface{}, error) {
 
 	seen := map[ast.Node]struct{}{}
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		switch v := node.(type) {
 		case *ast.ForStmt:
 			if len(v.Body.List) != 1 {
@@ -61,6 +66,11 @@ func LintSingleCaseSelect(pass *analysis.Pass) (interface{}, error) {
 
 func LintLoopCopy(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		loop := node.(*ast.RangeStmt)
 
 		if loop.Key == nil {
@@ -137,6 +147,11 @@ func LintLoopCopy(pass *analysis.Pass) (interface{}, error) {
 
 func LintIfBoolCmp(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		expr := node.(*ast.BinaryExpr)
 		if expr.Op != token.EQL && expr.Op != token.NEQ {
 			return
@@ -180,6 +195,11 @@ func LintIfBoolCmp(pass *analysis.Pass) (interface{}, error) {
 
 func LintBytesBufferConversions(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		if len(call.Args) != 1 {
 			return
@@ -213,6 +233,11 @@ func LintStringsContains(pass *analysis.Pass) (interface{}, error) {
 		0:  {token.GEQ: true, token.LSS: false},
 	}
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		expr := node.(*ast.BinaryExpr)
 		switch expr.Op {
 		case token.GEQ, token.GTR, token.NEQ, token.LSS, token.EQL:
@@ -274,6 +299,11 @@ func LintStringsContains(pass *analysis.Pass) (interface{}, error) {
 
 func LintBytesCompare(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		expr := node.(*ast.BinaryExpr)
 		if expr.Op != token.NEQ && expr.Op != token.EQL {
 			return
@@ -302,6 +332,11 @@ func LintBytesCompare(pass *analysis.Pass) (interface{}, error) {
 
 func LintForTrue(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		loop := node.(*ast.ForStmt)
 		if loop.Init != nil || loop.Post != nil {
 			return
@@ -317,6 +352,11 @@ func LintForTrue(pass *analysis.Pass) (interface{}, error) {
 
 func LintRegexpRaw(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		if !IsCallToAST(pass, call, "regexp.MustCompile") &&
 			!IsCallToAST(pass, call, "regexp.Compile") {
@@ -375,6 +415,11 @@ func LintRegexpRaw(pass *analysis.Pass) (interface{}, error) {
 
 func LintIfReturn(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		block := node.(*ast.BlockStmt)
 		l := len(block.List)
 		if l < 2 {
@@ -461,6 +506,11 @@ func LintRedundantNilCheckWithLen(pass *analysis.Pass) (interface{}, error) {
 	}
 
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		// check that expr is "x || y" or "x && y"
 		expr := node.(*ast.BinaryExpr)
 		if expr.Op != token.LOR && expr.Op != token.LAND {
@@ -564,6 +614,11 @@ func LintRedundantNilCheckWithLen(pass *analysis.Pass) (interface{}, error) {
 
 func LintSlicing(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		n := node.(*ast.SliceExpr)
 		if n.Max != nil {
 			return
@@ -612,6 +667,11 @@ func refersTo(pass *analysis.Pass, expr ast.Expr, ident *ast.Ident) bool {
 
 func LintLoopAppend(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		loop := node.(*ast.RangeStmt)
 		if !IsBlank(loop.Key) {
 			return
@@ -681,6 +741,11 @@ func LintLoopAppend(pass *analysis.Pass) (interface{}, error) {
 
 func LintTimeSince(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if !ok {
@@ -703,6 +768,11 @@ func LintTimeUntil(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		if !IsCallToAST(pass, call, "(time.Time).Sub") {
 			return
@@ -718,6 +788,11 @@ func LintTimeUntil(pass *analysis.Pass) (interface{}, error) {
 
 func LintUnnecessaryBlank(pass *analysis.Pass) (interface{}, error) {
 	fn1 := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		assign := node.(*ast.AssignStmt)
 		if len(assign.Lhs) != 2 || len(assign.Rhs) != 1 {
 			return
@@ -789,6 +864,11 @@ func LintUnnecessaryBlank(pass *analysis.Pass) (interface{}, error) {
 func LintSimplerStructConversion(pass *analysis.Pass) (interface{}, error) {
 	var skip ast.Node
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		// Do not suggest type conversion between pointers
 		if unary, ok := node.(*ast.UnaryExpr); ok && unary.Op == token.AND {
 			if lit, ok := unary.X.(*ast.CompositeLit); ok {
@@ -941,6 +1021,11 @@ func LintTrim(pass *analysis.Pass) (interface{}, error) {
 	}
 
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		var pkg string
 		var fun string
 
@@ -1118,6 +1203,12 @@ func LintLoopSlide(pass *analysis.Pass) (interface{}, error) {
 	// TODO(dh): support sliding to a different offset than the beginning of the slice
 
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
+
 		/*
 			for i := 0; i < n; i++ {
 				bs[i] = bs[offset+i]
@@ -1216,6 +1307,11 @@ func LintLoopSlide(pass *analysis.Pass) (interface{}, error) {
 
 func LintMakeLenCap(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		if fn, ok := call.Fun.(*ast.Ident); !ok || fn.Name != "make" {
 			// FIXME check whether make is indeed the built-in function
@@ -1266,6 +1362,11 @@ func LintAssertNotNil(pass *analysis.Pass) (interface{}, error) {
 		return true
 	}
 	fn1 := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		ifstmt := node.(*ast.IfStmt)
 		assign, ok := ifstmt.Init.(*ast.AssignStmt)
 		if !ok || len(assign.Lhs) != 2 || len(assign.Rhs) != 1 || !IsBlank(assign.Lhs[0]) {
@@ -1294,6 +1395,11 @@ func LintAssertNotNil(pass *analysis.Pass) (interface{}, error) {
 		pass.Reportf(ifstmt.Pos(), "when %s is true, %s can't be nil", Render(pass, assignIdent), Render(pass, assertIdent))
 	}
 	fn2 := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		// Check that outer ifstmt is an 'if x != nil {}'
 		ifstmt := node.(*ast.IfStmt)
 		if ifstmt.Init != nil {
@@ -1378,6 +1484,11 @@ func LintDeclareAssign(pass *analysis.Pass) (interface{}, error) {
 		return num >= 2
 	}
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		block := node.(*ast.BlockStmt)
 		if len(block.List) < 2 {
 			return
@@ -1428,6 +1539,11 @@ func LintDeclareAssign(pass *analysis.Pass) (interface{}, error) {
 
 func LintRedundantBreak(pass *analysis.Pass) (interface{}, error) {
 	fn1 := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		clause := node.(*ast.CaseClause)
 		if len(clause.Body) < 2 {
 			return
@@ -1439,6 +1555,11 @@ func LintRedundantBreak(pass *analysis.Pass) (interface{}, error) {
 		pass.Reportf(branch.Pos(), "redundant break statement")
 	}
 	fn2 := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		var ret *ast.FieldList
 		var body *ast.BlockStmt
 		switch x := node.(type) {
@@ -1496,6 +1617,11 @@ func isStringer(T types.Type) bool {
 
 func LintRedundantSprintf(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		call := node.(*ast.CallExpr)
 		if !IsCallToAST(pass, call, "fmt.Sprintf") {
 			return
@@ -1528,6 +1654,11 @@ func LintRedundantSprintf(pass *analysis.Pass) (interface{}, error) {
 
 func LintErrorsNewSprintf(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		if !IsCallToAST(pass, node, "errors.New") {
 			return
 		}
@@ -1547,6 +1678,11 @@ func LintRangeStringRunes(pass *analysis.Pass) (interface{}, error) {
 
 func LintNilCheckAroundRange(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		ifstmt := node.(*ast.IfStmt)
 		cond, ok := ifstmt.Cond.(*ast.BinaryExpr)
 		if !ok {
@@ -1609,6 +1745,11 @@ func LintSortHelpers(pass *analysis.Pass) (interface{}, error) {
 	}
 	var allErrors []Error
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		var body *ast.BlockStmt
 		switch node := node.(type) {
 		case *ast.FuncLit:
@@ -1701,6 +1842,11 @@ func LintGuardedDelete(pass *analysis.Pass) (interface{}, error) {
 		return ident, index.X, key, true
 	}
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		stmt := node.(*ast.IfStmt)
 		if len(stmt.Body.List) != 1 {
 			return
@@ -1737,6 +1883,11 @@ func LintGuardedDelete(pass *analysis.Pass) (interface{}, error) {
 
 func LintSimplifyTypeSwitch(pass *analysis.Pass) (interface{}, error) {
 	fn := func(node ast.Node) {
+		// OPT(dh): we could filter the entire file at once instead of
+		// individual nodes
+		if IsGenerated(pass, File(pass, node)) {
+			return
+		}
 		stmt := node.(*ast.TypeSwitchStmt)
 		if stmt.Init != nil {
 			// bailing out for now, can't anticipate how type switches with initializers are being used
